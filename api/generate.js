@@ -1,5 +1,4 @@
 module.exports = async function handler(req, res) {
-  // Handle CORS preflight
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -26,17 +25,16 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields: image_url and prompt.' });
     }
 
-    // Default to FLUX.1 Kontext [pro] for best face preservation & speed ($0.04/image).
-    // You can optionally set FAL_MODEL=fal-ai/flux-kontext/dev in Vercel Env Vars for lower cost.
     const modelId = (process.env.FAL_MODEL || 'fal-ai/flux-pro/kontext').trim();
     const endpoint = `https://fal.run/${modelId}`;
 
+    // Lower guidance_scale (2.5 - 2.8) preserves the uploaded person's real face and identity much better.
     const payload = modelId.includes('kontext/dev')
       ? {
           prompt,
           image_url,
           resolution_mode: '3:4',
-          guidance_scale: 2.5,
+          guidance_scale: 2.3,
           num_inference_steps: 28,
           acceleration: 'regular',
           output_format: 'jpeg',
@@ -46,7 +44,7 @@ module.exports = async function handler(req, res) {
           prompt,
           image_url,
           aspect_ratio: '3:4',
-          guidance_scale: 3.5,
+          guidance_scale: 2.8,
           output_format: 'jpeg',
           safety_tolerance: '2',
           num_images: 1
